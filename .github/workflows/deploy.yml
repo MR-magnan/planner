@@ -1,4 +1,4 @@
-name: FTP Deploy
+name: Deploy
 
 on:
   push:
@@ -10,7 +10,35 @@ jobs:
     name: FTP Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Install Composer Dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install NPM Dependencies and Build Assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run Laravel Migrations and Cache Clear
+        run: |
+          php artisan migrate --force
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+      
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
@@ -24,3 +52,4 @@ jobs:
             **/.idea*
             **/.idea*/**
             **/node_modules/**
+            **/vendor/**
