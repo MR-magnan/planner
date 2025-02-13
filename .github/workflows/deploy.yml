@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir deployment
           rsync -av --progress ./ ./deployment/ --exclude=node_modules --exclude=vendor --exclude=.git --exclude=.env --exclude=storage --exclude=tests
-          mv deployment/* .
+          rsync -a deployment/ . --remove-source-files
           rm -rf deployment
 
       - name: FTP Deploy
