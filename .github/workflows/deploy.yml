@@ -12,16 +12,15 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
 
       - name: Install Composer Dependencies
-        run: |
-          composer install --no-dev --optimize-autoloader
-      
+        run: composer install --no-dev --optimize-autoloader
+
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
@@ -32,13 +31,13 @@ jobs:
           npm ci
           npm run build
 
-      - name: Run Laravel Migrations and Cache Clear
+      - name: Prepare Deployment Package
         run: |
-          php artisan migrate --force
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-      
+          mkdir deployment
+          rsync -av --progress ./ ./deployment/ --exclude=node_modules --exclude=vendor --exclude=.git --exclude=.env --exclude=storage --exclude=tests
+          mv deployment/* .
+          rm -rf deployment
+
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
@@ -51,3 +50,14 @@ jobs:
             **/.git*/**
             **/.idea*
             **/.idea*/**
+            **/node_modules/**
+            **/vendor/**
+            **/.env
+            **/storage/**
+            **/tests/**
+
+      - name: Remote Commands (Optional)
+        if: success()
+        run: |
+          echo "To run migrations, SSH into the server and execute:"
+          echo "php artisan migrate --force"
