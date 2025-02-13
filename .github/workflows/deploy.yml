@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Laravel Application to Production Server
 
 on:
   push:
@@ -6,58 +6,49 @@ on:
       - main
 
 jobs:
-  ftp-deploy:
-    name: FTP Deploy
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.3
 
-      - name: Install Composer Dependencies
-        run: composer install --no-dev --optimize-autoloader
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    - name: Install NPM Dependencies
+      run: npm ci
 
-      - name: Install NPM Dependencies and Build Assets
-        run: |
-          npm ci
-          npm run build
+    - name: Build NPM Assets
+      run: npm run build
 
-      - name: Prepare Deployment Package
-        run: |
-          mkdir deployment
-          rsync -av --progress ./ ./deployment/ --exclude=node_modules --exclude=vendor --exclude=.git --exclude=.env --exclude=storage --exclude=tests
-          rsync -a deployment/ . --remove-source-files
-          rm -rf deployment
+    - name: Prepare Deployment Files
+      run: |
+        mkdir deployment
+        rsync -av --progress ./ ./deployment/ --exclude=node_modules --exclude=vendor --exclude=.git --exclude=.env --exclude=storage --exclude=tests
+        mv deployment/* .
+        rm -rf deployment
 
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.idea*
-            **/.idea*/**
-            **/node_modules/**
-            **/vendor/**
-            **/.env
-            **/storage/**
-            **/tests/**
-
-      - name: Remote Commands (Optional)
-        if: success()
-        run: |
-          echo "To run migrations, SSH into the server and execute:"
-          echo "php artisan migrate --force"
+    - name: FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_HOST }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: /
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/.idea*
+          **/.idea*/**
+          **/node_modules/**
+          **/vendor/**
+          **/.env
+          **/tests/**
