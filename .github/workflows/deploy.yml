@@ -51,5 +51,3 @@ jobs:
             **/.git*/**
             **/.idea*
             **/.idea*/**
-            **/node_modules/**
-            **/vendor/**
