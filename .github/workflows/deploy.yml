@@ -38,13 +38,13 @@ jobs:
           REMOTE_USER: ${{ secrets.SSH_USER }}
           TARGET: ${{ secrets.REMOTE_PATH }}
 
-        - name: Run Remote/Artisan commands
-          uses: appleboy/ssh-action@0.1.6
-          with:
-            host: ${{ secrets.SSH_HOST }}
-            username: ${{ secrets.SSH_USER }}
-            password: ${{ secrets.SSH_PASSWORD }}
-            script: |
-              cd ${{ secrets.REMOTE_PATH }}
-              php artisan migrate --force
-              php artisan optimize
+      - name: Run Remote/Artisan commands
+        uses: appleboy/ssh-action@0.1.6
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd ${{ secrets.REMOTE_PATH }}
+            php artisan migrate --force
+            php artisan optimize
