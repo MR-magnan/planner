@@ -1,4 +1,4 @@
-name: Deploy Laravel Application to Production Server
+name: Deploy
 
 on:
   push:
@@ -10,45 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: 8.3
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
 
-    - name: Install Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
+      - name: Install Composer dependencies
+        run: composer install --optimize-autoloader --no-dev --no-progress --no-interaction --prefer-dist
 
-    - name: Install NPM Dependencies
-      run: npm ci
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '23'
 
-    - name: Build NPM Assets
-      run: npm run build
+      - name: Install NPM dependencies
+        run: npm install
 
-    - name: Prepare Deployment Files
-      run: |
-        mkdir deployment
-        rsync -av --progress ./ ./deployment/ --exclude=node_modules --exclude=vendor --exclude=.git --exclude=.env --exclude=storage --exclude=tests
-        mv deployment/* .
-        rm -rf deployment
+      - name: Sync files to server
+        uses: easingthemes/ssh-deploy@v2.1.5
+        env:
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SOURCE: '.'
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          TARGET: ${{ secrets.REMOTE_PATH }}
 
-    - name: FTP Deploy
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-      with:
-        server: ${{ secrets.FTP_HOST }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: /
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/.idea*
-          **/.idea*/**
-          **/node_modules/**
-          **/vendor/**
-          **/.env
-          **/tests/**
+        - name: Run Remote/Artisan commands
+          uses: appleboy/ssh-action@0.1.6
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USER }}
+            password: ${{ secrets.SSH_PASSWORD }}
+            script: |
+              cd ${{ secrets.REMOTE_PATH }}
+              php artisan migrate --force
+              php artisan optimize
