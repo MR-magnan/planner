@@ -37,6 +37,8 @@ jobs:
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
           TARGET: ${{ secrets.REMOTE_PATH }}
+          ARGS: "-avz --delete"
+          SSH_PORT: "65002"
 
       - name: Run Remote/Artisan commands
         uses: appleboy/ssh-action@v0.1.6
