@@ -46,6 +46,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: "65002"
           script: |
             cd ${{ secrets.REMOTE_PATH }}
             php artisan migrate --force
