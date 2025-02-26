@@ -26,8 +26,9 @@ jobs:
         with:
           node-version: '23'
 
-      - name: Install NPM dependencies
+      - name: Install NPM dependencies and build assets
         run: npm install
+        run: npm run build
 
       - name: Sync files to server
         uses: easingthemes/ssh-deploy@v2.1.5
